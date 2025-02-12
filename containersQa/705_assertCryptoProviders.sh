@@ -19,4 +19,4 @@ parseArguments "$@"
 processArguments
 setup
 setupAlgorithmTesting
-logHostAndContainerCryptoPolicy 2>&1| tee $REPORT_FILE
+assertCryptoProviders

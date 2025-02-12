@@ -1,30 +1,41 @@
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.security.*;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Scanner;
 
 public class CheckAlgorithms {
-    // for future proofing, any time the algorithms change, just editing these hardcoded lists is enough:
-    public static final List<String> FIPS_PROVIDERS = Arrays.asList("SunPKCS11-NSS-FIPS");
-    public static final List<String> NONFIPS_PROVIDERS = Arrays.asList("SunPCSC");
-    public static final List<String> FIPS_ALGORITHMS = Arrays.asList();
-    public static final List<String> NONFIPS_ALGORITHMS = Arrays.asList("TLS_RSA_WITH_AES_128_CBC_SHA");
-
     private static final List<String> possibleFirstArgs = Arrays.asList("assert", "true", "silent-assert", "list", "false");
     private static final List<String> possibleSecondArgs = Arrays.asList("algorithms", "providers", "both");
 
+    // general purpose variables used later
+    public static List<String> FIPS_PROVIDERS = new ArrayList<>();
+    public static List<String> NONFIPS_PROVIDERS = new ArrayList<>();
+    public static List<String> FIPS_ALGORITHMS = new ArrayList<>();
+    public static List<String> NONFIPS_ALGORITHMS = new ArrayList<>();
+
     public static void main(String[] args) throws Exception {
-        if (args.length != 2 || args[0].equals("--help") || args[0].equals("-h")) {
+        if (args.length < 2 || args.length > 3 || args[0].equals("--help") || args[0].equals("-h")) {
             System.err.println("Test for listing available algorithms and providers and checking their FIPS compatibility");
-            System.err.println("Usage: CheckAlgorithms " + possibleFirstArgs + " " + possibleSecondArgs);
+            System.err.println("Usage: CheckAlgorithms " + possibleFirstArgs + " " + possibleSecondArgs + " configFilePath");
             System.err.println("First argument: specify whether to check FIPS compatibility (assert/true) or just list the items (list/false)");
             System.err.println("                silent-asserts just asserts, not lists the items");
             System.err.println("Second argument: specify what to check - algorithms, providers or both");
+            System.err.println("Third argument: mandatory when asserting, specify a config file with algorithms and providers the test should check against");
+            System.err.println("                the file can contain 4 different headings and then algorithms/providers belonging to the heading - one on each line");
+            System.err.println("                the different headings are: [providers-contains], [providers-not-contains], [algorithms-contains] and [algorithms-not-contains]");
             System.exit(1);
         }
 
         // Parse the arguments
         String shouldHonorFips = args[0].toLowerCase();
         String testCategory = args[1].toLowerCase();
+        String configFilePath = "";
+        if (args.length == 3) {
+            configFilePath = args[2];
+        }
 
         // Check if the shouldHonorFips is valid value
         if (!possibleFirstArgs.contains(shouldHonorFips)) {
@@ -40,9 +51,20 @@ public class CheckAlgorithms {
 
         System.out.println("Test type: " + shouldHonorFips);
         System.out.println("What is tested: " + testCategory);
+        System.out.println("Config file: " + configFilePath);
 
         boolean listItems = !shouldHonorFips.equals("silent-assert");
         boolean honorFipsHere = shouldHonorFips.equals("assert") || shouldHonorFips.equals("true") || shouldHonorFips.equals("silent-assert");
+
+        if (configFilePath.isEmpty() && honorFipsHere) {
+            // User must specify a config file when asserting
+            System.err.println("Must specify a config file, when asserting!");
+            System.exit(1);
+        } else if (honorFipsHere) {
+            // parse the config file
+            File configFile = new File(configFilePath);
+            parseConfigFile(configFile);
+        }
 
         boolean algorithmsOk = true;
         boolean providersOk = true;
@@ -132,23 +154,25 @@ public class CheckAlgorithms {
 
     static boolean providerAssert() {
         Provider[] providers = Security.getProviders();
-        boolean allOk = true;
+        boolean ok;
+        boolean ret = true;
 
         // assert that providers list contains all FIPS_PROVIDERS
         for (String fips : FIPS_PROVIDERS) {
             System.out.print("  asserting providers contain '" + fips + "' - ");
 
-            allOk = false;
+            ok = false;
             for (Provider p : providers) {
                 if (p.contains(fips)) {
                     System.out.println("OK");
-                    allOk = true;
+                    ok = true;
                     break;
                 }
             }
 
-            if (!allOk) {
+            if (!ok) {
                 System.out.println("FAIL");
+                ret = false;
             }
         }
 
@@ -156,20 +180,73 @@ public class CheckAlgorithms {
         for (String nonFips : NONFIPS_PROVIDERS) {
             System.out.print("  asserting providers don't contain '" + nonFips + "' - ");
 
+            ok = true;
             for (Provider p : providers) {
                 if (p.contains(nonFips)) {
                     System.out.println("FAIL");
-                    allOk = false;
+                    ok = false;
+                    ret = false;
                     break;
                 }
             }
 
-            if (allOk) {
+            if (ok) {
                 System.out.println("OK");
             }
         }
 
-        return allOk;
+        return ret;
+    }
+
+    static void parseConfigFile(File configFile) {
+        try {
+            Scanner fileReader = new Scanner(configFile);
+
+            String listType = "";
+            List<String> currentList = new ArrayList<>();
+
+            while (fileReader.hasNextLine()) {
+                String line = fileReader.nextLine();
+
+                if (line.startsWith("[") && line.endsWith("]")) {
+                    if (!currentList.isEmpty()) {
+                        flushList(listType, currentList);
+                    }
+                    listType = line;
+                    currentList.clear();
+                } else if (!line.isEmpty()) {
+                    currentList.add(line);
+                }
+            }
+
+            if (!currentList.isEmpty()) {
+                flushList(listType, currentList);
+            }
+
+        } catch (FileNotFoundException e) {
+            System.err.println("Specified config file was not found!");
+            e.printStackTrace();
+            System.exit(1);
+        }
+    }
+
+    static void flushList(String listType, List<String> listFromConfig) {
+        switch (listType) {
+            case "[providers-contains]":
+                FIPS_PROVIDERS.addAll(listFromConfig);
+                break;
+            case "[providers-not-contains]":
+                NONFIPS_PROVIDERS.addAll(listFromConfig);
+                break;
+            case "[algorithms-contains]":
+                FIPS_ALGORITHMS.addAll(listFromConfig);
+                break;
+            case "[algorithms-not-contains]":
+                NONFIPS_ALGORITHMS.addAll(listFromConfig);
+                break;
+            default:
+                System.err.println("Unknown " + listType + " category from config file!");
+                System.exit(1);
+        }
     }
 }
-

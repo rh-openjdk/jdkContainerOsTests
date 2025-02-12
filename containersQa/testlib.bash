@@ -935,14 +935,31 @@ function setupAlgorithmTesting {
   # Skipping the FIPS tests if $OTOOL_CONTAINERQA_RUNCRYPTO is set to anything other than "true"
   if [ "$OTOOL_CONTAINERQA_RUNCRYPTO" != "true"  ] ; then
     echo "$SKIPPED8"
-    exit
+    exit 0
   fi
 
   checkAlgorithmsCode=`cat $LIBCQA_SCRIPT_DIR/CheckAlgorithms.java | sed -e "s/'//g"` # the ' characters are escaping and making problems, deleting them here
   cipherListCode=`cat $LIBCQA_SCRIPT_DIR/CipherList.java`
+
+  if [ "$OTOOL_OS" == "el.9" -o "$OTOOL_OS" == "el.9z" ] ; then
+    if [ "$OTOOL_cryptosetup" == "fips" ] ; then
+      algorithmsConfigFileContent=`cat $LIBCQA_SCRIPT_DIR/el9ConfigFips.txt`
+    else
+      algorithmsConfigFileContent=`cat $LIBCQA_SCRIPT_DIR/el9ConfigLegacy.txt`
+    fi
+  elif [ "$OTOOL_OS" == "el.8z" -o  "$OTOOL_OS" == "el.8" ] ; then
+    if [ "$OTOOL_cryptosetup" == "fips" ] ; then
+      algorithmsConfigFileContent=`cat $LIBCQA_SCRIPT_DIR/el8ConfigFips.txt`
+    else
+      algorithmsConfigFileContent=`cat $LIBCQA_SCRIPT_DIR/el8ConfigLegacy.txt`
+    fi
+  else
+    echo "OTOOL_OS or OTOOL_cryptosetup is not declared or unknown: $OTOOL_OS, $OTOOL_cryptosetup"
+    exit 1
+  fi
 }
 
-function logHostAndContainerCryptoPolicy() {
+function checkHostAndContainerCryptoPolicy() {
   hostCryptoPolicy=`update-crypto-policies --show`
   containerCryptoPolicy=`runOnBaseDirBash "update-crypto-policies --show"`
 
@@ -950,13 +967,16 @@ function logHostAndContainerCryptoPolicy() {
   if [ "$OTOOL_OS_NAME" == "el" ] && [ "$OTOOL_cryptosetup" == "fips" ] ; then
     if [ "$hostCryptoPolicy" == "$containerCryptoPolicy" ] ; then
       echo "Crypto policy on RHEL host is the same as in the container ($containerCryptoPolicy), which was expected."
+      exit 0
     else
       echo "Crypto policy on RHEL host ($hostCryptoPolicy) is not the same as in the container ($containerCryptoPolicy), which was unexpected."
+      exit 1
     fi
 
   # host is not RHEL in FIPS mode, the crypto policies may or may not match, just logging them
   else
     echo "Crypto policy on host is $hostCryptoPolicy, and in container $containerCryptoPolicy."
+    exit 0
   fi
 }
 
@@ -970,28 +990,35 @@ function validateManualSettingFipsWithNoCrash() {
   if [ "$OTOOL_OS_NAME" == "el" ] && [ "$OTOOL_cryptosetup" == "fips" ] ; then
     if [ "$containerReturnCode" != 0 ] ; then
       echo "RHEL host is in FIPS, container returned $containerReturnCode, which was expected."
+      exit 0
     else
       echo "RHEL host is in FIPS, container returned $containerReturnCode, which was unexpected, expected not zero."
+      exit 1
     fi
 
   # host is RHEL not in FIPS mode, the command shouldn't fail
   elif [ "$OTOOL_OS_NAME" == "el" ] ; then
     if [ "$containerReturnCode" == 0 ] ; then
       echo "RHEL host is not in FIPS, container returned $containerReturnCode, which was expected."
+      exit 0
     else
       echo "RHEL host is not in FIPS, container returned $containerReturnCode, which was unexpected, expected zero."
+      exit 1
     fi
 
   # other variants (for example Fedora), the behavior is just logged
   else
     echo "Non-RHEL host, undefined FIPS, container returned $containerReturnCode."
+    exit 0
   fi
 }
 
 function listCryptoAlgorithms() {
   skipIfJreExecution
   set +x
-  commandAlgorithms="echo '$checkAlgorithmsCode' > /tmp/CheckAlgorithms.java && echo '$cipherListCode' > /tmp/CipherList.java && javac -d /tmp /tmp/CheckAlgorithms.java /tmp/CipherList.java && java -cp /tmp CheckAlgorithms list algorithms"
+
+  commandAlgorithms="echo '$checkAlgorithmsCode' > /tmp/CheckAlgorithms.java && echo '$cipherListCode' > /tmp/CipherList.java && echo '$algorithmsConfigFile' > /tmp/config.txt && javac -d /tmp /tmp/CheckAlgorithms.java /tmp/CipherList.java && java -cp /tmp CheckAlgorithms list algorithms"
+
   echo "runOnBaseDirBash $commandAlgorithms"
   runOnBaseDirBash "$commandAlgorithms" 2>&1| tee $REPORT_FILE
   set -x
@@ -1000,7 +1027,31 @@ function listCryptoAlgorithms() {
 function listCryptoProviders() {
   skipIfJreExecution
   set +x
-  commandProviders="echo '$checkAlgorithmsCode' > /tmp/CheckAlgorithms.java && echo '$cipherListCode' > /tmp/CipherList.java && javac -d /tmp /tmp/CheckAlgorithms.java /tmp/CipherList.java && java -cp /tmp CheckAlgorithms list providers"
+
+  commandProviders="echo '$checkAlgorithmsCode' > /tmp/CheckAlgorithms.java && echo '$cipherListCode' > /tmp/CipherList.java && echo '$algorithmsConfigFile' > /tmp/config.txt && javac -d /tmp /tmp/CheckAlgorithms.java /tmp/CipherList.java && java -cp /tmp CheckAlgorithms list providers"
+
+  echo "runOnBaseDirBash $commandProviders"
+  runOnBaseDirBash "$commandProviders" 2>&1| tee $REPORT_FILE
+  set -x
+}
+
+function assertCryptoAlgorithms() {
+  skipIfJreExecution
+  set +x
+
+  commandAlgorithms="echo '$checkAlgorithmsCode' > /tmp/CheckAlgorithms.java && echo '$cipherListCode' > /tmp/CipherList.java && echo '$algorithmsConfigFileContent' > /tmp/config.txt && javac -d /tmp /tmp/CheckAlgorithms.java /tmp/CipherList.java && java -cp /tmp CheckAlgorithms assert algorithms /tmp/config.txt"
+
+  echo "runOnBaseDirBash $commandAlgorithms"
+  runOnBaseDirBash "$commandAlgorithms" 2>&1| tee $REPORT_FILE
+  set -x
+}
+
+function assertCryptoProviders() {
+  skipIfJreExecution
+  set +x
+
+  commandProviders="echo '$checkAlgorithmsCode' > /tmp/CheckAlgorithms.java && echo '$cipherListCode' > /tmp/CipherList.java && echo '$algorithmsConfigFileContent' > /tmp/config.txt && javac -d /tmp /tmp/CheckAlgorithms.java /tmp/CipherList.java && java -cp /tmp CheckAlgorithms assert providers /tmp/config.txt"
+
   echo "runOnBaseDirBash $commandProviders"
   runOnBaseDirBash "$commandProviders" 2>&1| tee $REPORT_FILE
   set -x
