@@ -938,25 +938,16 @@ function setupAlgorithmTesting {
     exit 0
   fi
 
-  checkAlgorithmsCode=`cat $LIBCQA_SCRIPT_DIR/CheckAlgorithms.java | sed -e "s/'//g"` # the ' characters are escaping and making problems, deleting them here
-  cipherListCode=`cat $LIBCQA_SCRIPT_DIR/CipherList.java`
+  checkAlgorithmsCode=`cat $LIBCQA_SCRIPT_DIR/algorithmTesting/CheckAlgorithms.java | sed -e "s/'//g"` # the ' characters are escaping and making problems, deleting them here
+  cipherListCode=`cat $LIBCQA_SCRIPT_DIR/algorithmTesting/CipherList.java`
 
-  if [ "$OTOOL_OS" == "el.9" -o "$OTOOL_OS" == "el.9z" ] ; then
-    if [ "$OTOOL_cryptosetup" == "fips" ] ; then
-      algorithmsConfigFileContent=`cat $LIBCQA_SCRIPT_DIR/el9ConfigFips.txt`
-    else
-      algorithmsConfigFileContent=`cat $LIBCQA_SCRIPT_DIR/el9ConfigLegacy.txt`
-    fi
-  elif [ "$OTOOL_OS" == "el.8z" -o  "$OTOOL_OS" == "el.8" ] ; then
-    if [ "$OTOOL_cryptosetup" == "fips" ] ; then
-      algorithmsConfigFileContent=`cat $LIBCQA_SCRIPT_DIR/el8ConfigFips.txt`
-    else
-      algorithmsConfigFileContent=`cat $LIBCQA_SCRIPT_DIR/el8ConfigLegacy.txt`
-    fi
+  source $LIBCQA_SCRIPT_DIR/algorithmTesting/chooseAlgorithmConfigFile.sh
+  if [ "$OTOOL_cryptosetup" == "fips" ] ; then
+    assume_fips=true
   else
-    echo "OTOOL_OS or OTOOL_cryptosetup is not declared or unknown: $OTOOL_OS, $OTOOL_cryptosetup"
-    exit 1
+    assume_fips=false
   fi
+  algorithmsConfigFileContent=`cat $LIBCQA_SCRIPT_DIR/algorithmTesting/$(chooseAlgorithmConfigFile)`
 }
 
 function checkHostAndContainerCryptoPolicy() {

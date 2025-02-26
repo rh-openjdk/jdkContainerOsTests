@@ -27,8 +27,8 @@ TODO
 The tests 700 - 705 are made for testing whether the Red Hat's Build of OpenJDK containers are FIPS-compatible and behave as expected (for example when setting FIPS in the container manually).
 The main purpose of these tests, however, is to assure that, in the containers, there is the correct set of cryptographic algorithms and providers available.
 
-The main file that is concerned with this testing is `containersQa/CheckAlgorithms.java`.
-(Note that this file can also work on its own - even outside of containers, but it needs `containersQa/cipherList.java` to work.)
+The main file that is concerned with this testing is `containersQa/algorithmTesting/CheckAlgorithms.java`.
+(Note that this file can also work on its own - even outside of containers, but it needs `containersQa/algorithmTesting/cipherList.java` to work.)
 It was originally a part of the `rhqe` test suite, but now, it is located here.
 As its name says, it is used for checking algorithms (and providers).
 It can either just list the algorithms/providers or assert them against a config file.
@@ -36,11 +36,11 @@ Running the class with `--help` brings up a help message explaining the differen
 
 There are currently 4 different config files:
 
-| Config File                        | Description                             |
-|------------------------------------|-----------------------------------------|
-| `containersQa/el8ConfigFips.txt`   | Used on RHEL 8 hosts set to FIPS mode.  |
-| `containersQa/el8ConfigLegacy.txt` | Used on RHEL 8 hosts without FIPS mode. |
-| `containersQa/el9ConfigFips.txt`   | Used on RHEL 9 hosts set to FIPS mode.  |
-| `containersQa/el9ConfigLegacy.txt` | Used on RHEL 9 hosts without FIPS mode. |
+| Config File                                         | Description                             |
+|-----------------------------------------------------|-----------------------------------------|
+| `containersQa/algorithmTesting/el8ConfigFips.txt`   | Used on RHEL 8 hosts set to FIPS mode.  |
+| `containersQa/algorithmTesting/el8ConfigLegacy.txt` | Used on RHEL 8 hosts without FIPS mode. |
+| `containersQa/algorithmTesting/el9ConfigFips.txt`   | Used on RHEL 9 hosts set to FIPS mode.  |
+| `containersQa/algorithmTesting/el9ConfigLegacy.txt` | Used on RHEL 9 hosts without FIPS mode. |
 
-It should be straightforward to create new config files for these tests as needed - it is explained in the help message of `CheckAlgorithms`. 
+It should be straightforward to create new config files for these tests as needed - it is explained in the help message of `algorithmTesting.CheckAlgorithms`. 
