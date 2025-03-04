@@ -19,7 +19,7 @@ function chooseAlgorithmConfigFile() {
       echo "el8ConfigLegacy.txt"
     fi
   else
-    echo "OTOOL_OS is not declared or unknown: $OTOOL_OS"
+    echo "Unknown/unsupported RHEL version was specified: $1"
     exit 1
   fi
 }
