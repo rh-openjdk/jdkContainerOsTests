@@ -24,4 +24,4 @@ function chooseAlgorithmConfigFile() {
   fi
 }
 
-chooseAlgorithmConfigFile $1 $2
+chooseAlgorithmConfigFile "${1}" "${2}"
