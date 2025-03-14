@@ -18,6 +18,12 @@ function chooseAlgorithmConfigFile() {
     else
       echo "el8ConfigLegacy.txt"
     fi
+  elif [ "$1" == "el.10" ] ; then
+    if [ "$2" == "true" -o "$2" == "fips" ] ; then
+      echo "el10ConfigFips.txt"
+    else
+      echo "el10ConfigLegacy.txt"
+    fi
   else
     echo "Unknown/unsupported RHEL version was specified: $1"
     exit 1
