@@ -941,7 +941,7 @@ function setupAlgorithmTesting {
   checkAlgorithmsCode=`cat $LIBCQA_SCRIPT_DIR/algorithmTesting/CheckAlgorithms.java | sed -e "s/'//g"` # the ' characters are escaping and making problems, deleting them here
   cipherListCode=`cat $LIBCQA_SCRIPT_DIR/algorithmTesting/CipherList.java`
 
-  local configFileName=$(bash $LIBCQA_SCRIPT_DIR/algorithmTesting/chooseAlgorithmConfigFile.sh $OTOOL_OS $OTOOL_cryptosetup)
+  local configFileName=$(bash $LIBCQA_SCRIPT_DIR/algorithmTesting/chooseAlgorithmConfigFile.sh $OTOOL_BUILD_OS $OTOOL_cryptosetup)
   algorithmsConfigFileContent=`cat $LIBCQA_SCRIPT_DIR/algorithmTesting/$configFileName `
 }
 
