@@ -4,13 +4,7 @@ SunRsaSign
 SunEC
 SunJSSE
 SunJCE
-SunJGSS
-SunSASL
 XMLDSig
-SunPCSC
-JdkLDAP
-JdkSASL
-SunPKCS11
 
 [algorithms-contains]
 TLS_AES_256_GCM_SHA384
