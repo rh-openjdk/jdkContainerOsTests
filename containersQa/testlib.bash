@@ -79,6 +79,7 @@ function pretest() {
   SKIPPED2="!skipped! no local maven !skipped!"
   SKIPPED3="!skipped! broken right now !skipped!"
   SKIPPED4="!skipped! jre only testing does not support this feature."
+  SKIPPED44="!skipped! jdk only testing does not support this feature."
   SKIPPED5="!skipped! reproducers security now must be enabled by OTOOL_RUN_SECURITY_REPRODUCERS=true"
   SKIPPED6="!skipped! rhel 7 based images do not support this functionality."
   SKIPPED7="!skipped! rhel 7 Os version of Podman does not support this functionality."
@@ -100,8 +101,17 @@ function setup() {
 # With the addition of a JRE Runtime container we should not run for full jdk features like
 # Maven, S2i, Javac.
 function skipIfJreExecution() {
+  # maybe replace OTOOL_jresdk with check on javac command?
   if [ "$OTOOL_jresdk" == "jre"  ] ; then
       echo "$SKIPPED4"
+    exit
+  fi
+}
+
+function skipIfJdkExecution() {
+  # maybe replace OTOOL_jresdk with check on javac command?
+  if [ "$OTOOL_jresdk" == "jdk"  ] ; then
+      echo "$SKIPPED44"
     exit
   fi
 }
@@ -216,6 +226,10 @@ function runOnBaseDirOtherUser() {
 
 function runOnBaseDirBash() {
   $PD_PROVIDER run -i $HASH bash -c "$1"
+}
+
+function runOnBaseDirBashWithMount() {
+  $PD_PROVIDER run -v=$LIBCQA_SCRIPT_DIR:/testsDir -i $HASH bash -c "$1"
 }
 
 function runOnBaseDirBashOtherUser() {
@@ -1129,4 +1143,17 @@ function assertCryptoProviders() {
   echo "runOnBaseDirBash $commandProviders"
   runOnBaseDirBash "$commandProviders" 2>&1| tee $REPORT_FILE
   set -x
+}
+
+
+function tryJreCompilation() {
+  runOnBaseDirBashWithMount "ls /testsDir | grep \\.java$"
+  local v=$(runOnBaseDirBashWithMount "java -version " 2>&1 | grep  "openjdk version" | head -n 1)
+  if  echo "$v" | grep '"1.8'  ||  echo "$v" | grep '"11' ; then
+    echo '!skipped! Skipping runtime compilation on 8 and 11'
+    exit 0
+  else
+    echo '17+, going on'
+  fi
+  runOnBaseDirBashWithMount "java /testsDir/InProcessCompileDemo.java"
 }
