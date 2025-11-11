@@ -52,7 +52,7 @@ jobs:
         run: |
           podman --version
           podman run --rm  -it ${{matrix.jdkimage}} bash --version
-          podman run --rm  -it ${{matrix.jdkimage}} java --version
+          podman run --rm  -it ${{matrix.jdkimage}} java -version
           podman run --rm  -it ${{matrix.jdkimage}} cat /etc/redhat-release
       - name: RFaS
         run:  |
