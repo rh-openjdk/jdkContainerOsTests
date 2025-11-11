@@ -27,11 +27,16 @@ jobs:
       - name: "Install dependencies"
         run: |
           sudo apt-get update
-          sudo apt-get install podman
+          sudo apt-get install podman git
       - name: Versions
         run: |
           podman --version
           podman run --rm  -it ${{matrix.jdkimage}} bash --version
+      - name: RFaS
+        run:  |
+          ls -l
+          git submodule update --init --recursive --rebase --force
+          ls -l run-folder-as-tests
 #      - name: Run
 #        run: JNI_FAIL=true RFAT_RERUNS=2 bash ./run.sh "${JAVA_HOME}"
 #      - name: Upload results
