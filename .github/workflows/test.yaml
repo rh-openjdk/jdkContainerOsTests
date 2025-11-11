@@ -17,11 +17,31 @@ jobs:
       matrix:
         jdkconf:
           - JDK 25
+          - JDK 21
+          - JDK 17
+          - JDK 11
+          - JDK 8
         include:
           - jdkconf: JDK 25
             jdkver: "25"
             osver: "10"
             jdkimage: "docker.io/library/eclipse-temurin:25-jdk-ubi10-minimal"
+          - jdkconf: JDK 21
+            jdkver: "21"
+            osver: "10"
+            jdkimage: "docker.io/library/eclipse-temurin:21-jdk-ubi10-minimal"
+          - jdkconf: JDK 17
+            jdkver: "17"
+            osver: "10"
+            jdkimage: "docker.io/library/eclipse-temurin:17-jdk-ubi10-minimal"
+          - jdkconf: JDK 11
+            jdkver: "11"
+            osver: "10"
+            jdkimage: "docker.io/library/eclipse-temurin:11-jdk-ubi10-minimal"
+          - jdkconf: JDK 8
+            jdkver: "8"
+            osver: "10"
+            jdkimage: "docker.io/library/eclipse-temurin:8-jdk-ubi10-minimal"
     steps:
       - uses: actions/checkout@v3
       - name: "Install dependencies"
