@@ -1,0 +1,43 @@
+name: "test"
+
+on:
+  pull_request:
+    branches:
+      - "*"
+  push:
+    branches:
+      - "*"
+
+jobs:
+  test-linux-jtreg:
+    name: "Linux run.sh"
+    runs-on: "ubuntu-latest"
+    strategy:
+      fail-fast: false
+      matrix:
+        jdkconf:
+          - JDK 25
+        include:
+          - jdkconf: JDK 25
+            jdkver: "25"
+            osver: "10"
+            jdkimage: "docker.io/library/eclipse-temurin:25-jdk-ubi10-minimal"
+    steps:
+      - uses: actions/checkout@v3
+      - name: "Install dependencies"
+        run: |
+          sudo apt-get update
+          sudo apt-get install podman
+      - name: Versions
+        run: |
+          podman --version
+          podman run --rm  -it ${{matrix.jdkimage}} bash --version
+#      - name: Run
+#        run: JNI_FAIL=true RFAT_RERUNS=2 bash ./run.sh "${JAVA_HOME}"
+#      - name: Upload results
+#        if: ${{ always() }}
+#        uses: actions/upload-artifact@v4
+#        with:
+#          name: "linux-jtreg-jdk${{ matrix.jdkver}}"
+#          path: "test.*.tar.gz"
+
