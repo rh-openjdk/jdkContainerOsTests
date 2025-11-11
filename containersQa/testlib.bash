@@ -48,7 +48,12 @@ function processArguments() {
   else
     echo "OpenJDK Container Image not found on Brew. Check that images exists."
     echo "Failed Image: $ARG_JDK"
-    exit 1
+    if [ "$REMOTE_NORMAL_CONTAINER" = "true" ] ; then
+      echo "using directly $ARG_JDK"
+      FORCED_ARG_HASH="${ARG_JDK}"
+    else
+      exit 1
+    fi
   fi
 
   if [[ -z $ARG_REPORT_DIR ]] ; then
@@ -172,7 +177,11 @@ function cleanContainerQaPropertiesFile() {
 }
 
 function getHashFromImageId() {
-  HASH=`$PD_PROVIDER inspect $JDK_CONTAINER_IMAGE --format "{{.Id}}"`
+  if [ -z "${FORCED_ARG_HASH}" ] ; then
+    HASH=`$PD_PROVIDER inspect $JDK_CONTAINER_IMAGE --format "{{.Id}}"`
+  else
+    HASH="${FORCED_ARG_HASH}"
+  fi
   echo "The Image under test's ID is: $HASH"
 }
 
