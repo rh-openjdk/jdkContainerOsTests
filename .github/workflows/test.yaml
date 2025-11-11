@@ -32,13 +32,19 @@ jobs:
         run: |
           podman --version
           podman run --rm  -it ${{matrix.jdkimage}} bash --version
+          podman run --rm  -it ${{matrix.jdkimage}} java --version
+          podman run --rm  -it ${{matrix.jdkimage}} cat /etc/redhat-release
       - name: RFaS
         run:  |
           ls -l
           git submodule update --init --recursive --rebase --force
           ls -l run-folder-as-tests
-#      - name: Run
-#        run: JNI_FAIL=true RFAT_RERUNS=2 bash ./run.sh "${JAVA_HOME}"
+          a=$(ls run-folder-as-tests | wc -l)
+          echo "total $a"
+          test $a -gt 3
+      - name: Run
+        run: |
+          bash ./run_containerqa.sh  --container-image=${{matrix.jdkimage}} --report-dir=jdk${{matrix.jdkver}}-el${{matrix.osver}}
 #      - name: Upload results
 #        if: ${{ always() }}
 #        uses: actions/upload-artifact@v4
