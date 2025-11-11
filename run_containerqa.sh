@@ -97,7 +97,7 @@ fi
 # results should be in log, if not, it means suite was not run
 grep -Eqi -e '^passed' -e '^(failed|error)' -e '^Ignored' test.${TIME}/tests.log || exit 2
 
-if [ "x$JNI_FAIL" == "xtrue" ] ; then
+if [ "x$CQA_FAIL" == "xtrue" ] ; then
   if grep -Eq -e '^Failed: [1-9]' test.${TIME}/tests.log  ; then
     exit 1
   fi
