@@ -987,9 +987,22 @@ function checkJavaHomeEnvVar() {
   runOnBaseDir bash -c 'echo $JAVA_HOME'
 }
 
+function checkJavaHomeEnvExists() {
+  runOnBaseDir bash -c 'ls -l $JAVA_HOME'
+  runOnBaseDir bash -c 'ls -l $JAVA_HOME/bin'
+  runOnBaseDir bash -c 'ls -l $JAVA_HOME/bin/java'
+}
+
+function checkJavaHomeEnvIsFile() {
+  runOnBaseDir bash -c 'test -d $JAVA_HOME'
+  runOnBaseDir bash -c 'test -d $JAVA_HOME/bin'
+  runOnBaseDir bash -c 'test -f $JAVA_HOME/bin/java'
+}
+
 function checkJavaHomeEnvVarValid() {
   runOnBaseDir bash -c '$JAVA_HOME/bin/java -version'
 }
+
 
 function otherUserRun() {
   set +e

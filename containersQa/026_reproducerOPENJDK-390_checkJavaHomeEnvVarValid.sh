@@ -20,4 +20,6 @@ processArguments
 setup
 echo "Verifier for Jira Ticket: OPENJDK-390." | tee $REPORT_FILE
 echo "Jira Link: https://issues.redhat.com/browse/OPENJDK-390" | tee -a $REPORT_FILE
+checkJavaHomeEnvExists 2>&1| tee -a $REPORT_FILE
+checkJavaHomeEnvIsFile 2>&1| tee -a $REPORT_FILE
 checkJavaHomeEnvVarValid 2>&1| tee -a $REPORT_FILE
