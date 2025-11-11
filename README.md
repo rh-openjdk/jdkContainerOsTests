@@ -19,9 +19,9 @@ Supported Containers:
 | UBI 9                    | 11              | Runtime             | [openjdk-11-runtime](https://catalog.redhat.com/software/containers/ubi9/openjdk-11-runtime/61ee7d1c33f211c45407a91c)                |
 | UBI 9                    | 17              | Runtime             | [openjdk-17-runtime](https://catalog.redhat.com/software/containers/ubi9/openjdk-17-runtime/61ee7d45384a3eb331996bee)                |
 
-How to run the container testsuite.
-
-TODO
+## How to run the container testsuite.
+eg: `RFAT_RERUNS=1 WHITELIST=".*" sh run_containerqa.sh --container-image=docker.io/library/eclipse-temurin:8-jdk-ubi10-minimal`
+Generally you need some container inage.... Consult GHAs for more hints.
 
 ## Cryptographic Algorithms/Providers Testing
 The tests 700 - 705 are made for testing whether the Red Hat's Build of OpenJDK containers are FIPS-compatible and behave as expected (for example when setting FIPS in the container manually).
