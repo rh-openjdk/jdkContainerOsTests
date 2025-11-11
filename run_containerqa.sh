@@ -76,7 +76,7 @@ mkdir -p $jtReport
 export SCRATCH_DISK="`pwd`/$jtWork"
 export WORKSPACE="`pwd`/$jtReport"
 SUITE_FOLDER="containersQa"
-bash  ${SCRIPT_DIR}/run-folder-as-tests/run-folder-as-tests.sh ${SCRIPT_DIR}/${SUITE_FOLDER} ${CONTAINER_VERSION}
+REMOTE_NORMAL_CONTAINER=true bash  ${SCRIPT_DIR}/run-folder-as-tests/run-folder-as-tests.sh ${SCRIPT_DIR}/${SUITE_FOLDER} ${CONTAINER_VERSION}  | tee test.${TIME}/tests.log
 
 toPack="${jtReport} test.${TIME}/tests.log"
 if [ "x$JNI_PACK_WORK" == "xtrue" ] ; then
