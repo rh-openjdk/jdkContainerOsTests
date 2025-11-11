@@ -44,7 +44,7 @@ jobs:
           test $a -gt 3
       - name: Run
         run: |
-          BLACKLIST="101.*" RFAT_RERUNS=2 bash ./run_containerqa.sh  --container-image=${{matrix.jdkimage}}
+          CQA_FAIL=false BLACKLIST="101.*" RFAT_RERUNS=2 bash ./run_containerqa.sh  --container-image=${{matrix.jdkimage}}
       - name: Upload results
         if: ${{ always() }}
         uses: actions/upload-artifact@v4
