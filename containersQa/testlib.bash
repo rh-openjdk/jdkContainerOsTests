@@ -229,7 +229,10 @@ function runOnBaseDirBash() {
 }
 
 function runOnBaseDirBashWithMount() {
-  $PD_PROVIDER run -v=$LIBCQA_SCRIPT_DIR:/testsDir -i $HASH bash -c "$1"
+  local d=$(mktemp -d)
+  cp -r $LIBCQA_SCRIPT_DIR/*.java "${d}"
+  $PD_PROVIDER run -v="${d}:/testsDir" -i "$HASH" bash -c "${1}"
+  rm -rf "${d}"
 }
 
 function runOnBaseDirBashOtherUser() {
