@@ -84,6 +84,9 @@ function pretest() {
   SKIPPED6="!skipped! rhel 7 based images do not support this functionality."
   SKIPPED7="!skipped! rhel 7 Os version of Podman does not support this functionality."
   SKIPPED8="!skipped! Skipping FIPS algorithms/providers tests."
+  SKIPPED9='!skipped! No sudo on system'
+  SKIPPED10='!skipped! mount do not work'
+  SKIPPED11='!skipped! Skipping runtime compilation on 8 and 11'
   export DISPLAY=:0
   if [ "x$OTOOL_CONTAINER_RUNTIME" = "x" ] ; then
     export PD_PROVIDER=podman
@@ -1165,13 +1168,17 @@ function assertCryptoProviders() {
 
 
 function tryJreCompilation() {
-  # if mount do not work, skip?
-  runOnBaseDirBashWithMount "ls -l /" "$1"
-  runOnBaseDirBashWithMount "ls -ld /testsDir" "$1"
-  runOnBaseDirBashWithMount "ls -l /testsDir | grep \\.java$" "$1"
+  local mountFailures=0
+  runOnBaseDirBashWithMount "ls -l /" "$1" || let mountFailures="$mountFailures+1"
+  runOnBaseDirBashWithMount "ls -ld /testsDir" "$1" || let mountFailures="$mountFailures+10"
+  runOnBaseDirBashWithMount "ls -l /testsDir | grep \\.java$" "$1" || let mountFailures="$mountFailures+100"
+  if [ "0$mountFailures" -gt 0 ] ; then
+    echo "$SKIPPED10"
+    exit 0
+  fi
   local v=$(runOnBaseDirBashWithMount "java -version " 2>&1 | grep  "openjdk version" | head -n 1)
   if  echo "$v" | grep '"1.8'  ||  echo "$v" | grep '"11' ; then
-    echo '!skipped! Skipping runtime compilation on 8 and 11'
+    echo "$SKIPPED11"
     exit 0
   else
     echo '17+, going on'
