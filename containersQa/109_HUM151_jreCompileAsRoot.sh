@@ -16,7 +16,7 @@ readonly SCRIPT_DIR="$( cd -P "$( dirname "$SCRIPT_SOURCE" )" && pwd )"
 source $SCRIPT_DIR/testlib.bash
 
 if ! which sudo; then
-  echo '!skipped! No sudo on system'
+  echo "$SKIPPED9"
   exit
 fi
 
