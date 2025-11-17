@@ -231,7 +231,9 @@ function runOnBaseDirBash() {
 function runOnBaseDirBashWithMount() {
   local d=$(mktemp -d)
   cp -r $LIBCQA_SCRIPT_DIR/*.java "${d}"
-  $PD_PROVIDER run -v="${d}:/testsDir" -i "$HASH" bash -c "${1}"
+  chmod 777 "${d}"
+  ls -ld ${d}
+  ${2} $PD_PROVIDER run -v="${d}:/testsDir:Z" -i "$HASH" bash -c "${1}"
   rm -rf "${d}"
 }
 
@@ -1163,7 +1165,10 @@ function assertCryptoProviders() {
 
 
 function tryJreCompilation() {
-  runOnBaseDirBashWithMount "ls /testsDir | grep \\.java$"
+  # if mount do not work, skip?
+  runOnBaseDirBashWithMount "ls -l /" "$1"
+  runOnBaseDirBashWithMount "ls -ld /testsDir" "$1"
+  runOnBaseDirBashWithMount "ls -l /testsDir | grep \\.java$" "$1"
   local v=$(runOnBaseDirBashWithMount "java -version " 2>&1 | grep  "openjdk version" | head -n 1)
   if  echo "$v" | grep '"1.8'  ||  echo "$v" | grep '"11' ; then
     echo '!skipped! Skipping runtime compilation on 8 and 11'
@@ -1171,5 +1176,5 @@ function tryJreCompilation() {
   else
     echo '17+, going on'
   fi
-  runOnBaseDirBashWithMount "java /testsDir/InProcessCompileDemo.java"
+  runOnBaseDirBashWithMount "java /testsDir/InProcessCompileDemo.java" "$1"
 }
