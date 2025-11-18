@@ -236,8 +236,10 @@ function runOnBaseDirBashWithMount() {
   cp -r $LIBCQA_SCRIPT_DIR/*.java "${d}"
   chmod 777 "${d}"
   ls -ld ${d}
-  ${2} $PD_PROVIDER run -v="${d}:/testsDir:Z" -i "$HASH" bash -c "${1}"
+  local r=0
+  ${2} $PD_PROVIDER run -v="${d}:/testsDir:Z" -i "$HASH" bash -c "${1}" || r=$?
   rm -rf "${d}"
+  return $r
 }
 
 function runOnBaseDirBashOtherUser() {
@@ -1183,5 +1185,5 @@ function tryJreCompilation() {
   else
     echo '17+, going on'
   fi
-  runOnBaseDirBashWithMount "java /testsDir/InProcessCompileDemo.java" "$1"
+  runOnBaseDirBashWithMount "java /testsDir/InProcessCompileDemo.java $OTOOL_JDK_VERSION" "$1"
 }

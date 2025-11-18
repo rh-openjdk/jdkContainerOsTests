@@ -7,7 +7,8 @@ import java.util.*;
 
 public class InProcessCompileDemo {
     public static void main(String[] args) throws Exception {
-        String jvmVersion="17";
+        String version = System.getProperty("java.version");
+        String jvmVersion = version.split("\\.")[0];
         if (args.length>0) { 
            jvmVersion=args[0];
         }
@@ -35,7 +36,7 @@ public class InProcessCompileDemo {
         StandardJavaFileManager std = compiler.getStandardFileManager(diagnostics, null, null);
         MemoryFileManager memFM = new MemoryFileManager(std);
 
-        // compile for a specific release (22 here)
+        // compile for a specific release
         JavaCompiler.CompilationTask task = compiler.getTask(
                 null, memFM, diagnostics,
                 List.of("--release", jvmVersion), null, List.of(source));
