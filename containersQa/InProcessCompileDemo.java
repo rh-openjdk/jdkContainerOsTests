@@ -39,7 +39,9 @@ public class InProcessCompileDemo {
         // compile for a specific release
         JavaCompiler.CompilationTask task = compiler.getTask(
                 null, memFM, diagnostics,
-                List.of("--release", jvmVersion), null, List.of(source));
+                //List.of("--release", jvmVersion),
+                 new ArrayList<>(),
+                 null, List.of(source));
 
         boolean ok = task.call();
         diagnostics.getDiagnostics().forEach(System.out::println);
