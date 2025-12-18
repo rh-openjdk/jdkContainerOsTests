@@ -464,15 +464,29 @@ function onlyOneJdk() {
   javas=$(cat $(getOldLsLog) | cleanBashOutputs | grep java |wc -l)
   jres=$(cat $(getOldLsLog) | cleanBashOutputs | grep jre  |wc -l)
   #branch for jre vs jdk
-  if [ "$OTOOL_jresdk" == "jre"  ] ; then
-    echo "otool jresdk settings is: $OTOOL_jresdk"
-    # it is interval due to rhel 7/8 diffs
-    test $javas -ge 1 -a $javas -le 1
-    test $jres  -ge 5 -a $jres  -le 6
-  else # JDK
-    # it is interval due to rhel 7/8 diffs
-    test $javas -ge 5 -a $javas -le 6
-    test $jres  -ge 5 -a $jres  -le 6
+  if [[ $OTOOL_JDK_VERSION -ge 25 ]]; then
+    if [ "$OTOOL_jresdk" == "jre"  ] ; then
+      echo "otool jresdk settings is: $OTOOL_jresdk"
+      # it is interval due to rhel 7/8 diffs
+      test $javas -ge 1 -a $javas -le 1
+      test $jres  -ge 5 -a $jres  -le 6
+    else # JDK
+      # it is interval due to rhel 7/8 diffs
+      test $javas -ge 4 -a $javas -le 4
+      test $jres  -ge 4 -a $jres  -le 4
+    fi
+
+  else
+    if [ "$OTOOL_jresdk" == "jre"  ] ; then
+      echo "otool jresdk settings is: $OTOOL_jresdk"
+      # it is interval due to rhel 7/8 diffs
+      test $javas -ge 1 -a $javas -le 1
+      test $jres  -ge 5 -a $jres  -le 6
+    else # JDK
+      # it is interval due to rhel 7/8 diffs
+      test $javas -ge 5 -a $javas -le 6
+      test $jres  -ge 5 -a $jres  -le 6
+    fi
   fi
 }
 
@@ -481,18 +495,29 @@ function allExeptOneAreLinks() {
   cat $(getOldLsLLog) | cleanBashOutputs| grep  jre | grep -e "->"
   javasLinks=$(cat $(getOldLsLLog) | cleanBashOutputs| grep java | grep -e "->" | wc -l)
   jresLinks=$(cat $(getOldLsLLog) | cleanBashOutputs| grep  jre | grep -e "->" | wc -l)
-
-  if [ "$OTOOL_jresdk" == "jre"  ] ; then
-    echo "otool jresdk settings is: $OTOOL_jresdk"
-    # it is interval due to rhel 7/8 diffs
-    test $javasLinks -ge 1 -a $javasLinks -le 1
-    test $jresLinks  -ge 5 -a $jresLinks  -le 6
-  else # JDK
-    # it is interval due to rhel 7/8 diffs
-    test $javasLinks -ge 4 -a $javasLinks -le 5
-    test $jresLinks  -ge 5 -a $jresLinks  -le 6
-  fi  
-
+  if [[ $OTOOL_JDK_VERSION -ge 25 ]]; then 
+    if [ "$OTOOL_jresdk" == "jre"  ] ; then
+      echo "otool jresdk settings is: $OTOOL_jresdk"
+      # it is interval due to rhel 7/8 diffs
+      test $javasLinks -ge 1 -a $javasLinks -le 1
+      test $jresLinks  -ge 5 -a $jresLinks  -le 6
+    else # JDK
+      # it is interval due to rhel 7/8 diffs
+      test $javasLinks -ge 3 -a $javasLinks -le 3
+      test $jresLinks  -ge 4 -a $jresLinks  -le 4
+    fi
+  else
+    if [ "$OTOOL_jresdk" == "jre"  ] ; then
+      echo "otool jresdk settings is: $OTOOL_jresdk"
+      # it is interval due to rhel 7/8 diffs
+      test $javasLinks -ge 1 -a $javasLinks -le 1
+      test $jresLinks  -ge 5 -a $jresLinks  -le 6
+    else # JDK
+      # it is interval due to rhel 7/8 diffs
+      test $javasLinks -ge 4 -a $javasLinks -le 5
+      test $jresLinks  -ge 5 -a $jresLinks  -le 6
+    fi  
+  fi
   cat $(getOldLsLLog) | cleanBashOutputs| grep java | grep -v -e "->"
   cat $(getOldLsLLog) | cleanBashOutputs| grep  jre | grep -v -e "->" || echo "no jre dir is ok" #  jres are ok to not exists
   javasNonLinks=$(cat $(getOldLsLLog) | cleanBashOutputs| grep java | grep -v -e "->" | wc -l)
@@ -865,14 +890,15 @@ function checkHardcodedJdks() {
     JRE_11_VERSION='11.0.29+7-LTS'
     JRE_17_VERSION='17.0.17+10-LTS'
     JRE_21_VERSION='21.0.9+10-LTS'
+    JRE_25_VERSION='25.0.1'
     cat $(getOldJavaVersionLog)
     cat $(getOldJavaVersionLog) | grep "openjdk version"
-    cat $(getOldJavaVersionLog) | grep -e "$JRE_11_VERSION" -e "$JRE_8_VERSION" -e "$JRE_17_VERSION" -e "$JRE_21_VERSION"
+    cat $(getOldJavaVersionLog) | grep -e "$JRE_11_VERSION" -e "$JRE_8_VERSION" -e "$JRE_17_VERSION" -e "$JRE_21_VERSION" -e "$JRE_25_VERSION"
 
   else
     cat $(getOldMvnVersionLog)
     cat $(getOldMvnVersionLog) | grep "Java version:"
-    cat $(getOldMvnVersionLog) | grep -e "Java version: 11.0.29" -e "Java version: 1.8.0_472" -e "Java version: 17.0.17" -e "Java version: 21.0.9"
+    cat $(getOldMvnVersionLog) | grep -e "Java version: 11.0.29" -e "Java version: 1.8.0_472" -e "Java version: 17.0.17" -e "Java version: 21.0.9" -e "Java version: 25.0.1"
   fi    
 
 }
@@ -888,6 +914,8 @@ function checkJdkMajorVersion() {
     VERSION_CHECK_KEY='openjdk version \"17.0'
   elif [[ $OTOOL_JDK_VERSION -eq 21 ]]; then
     VERSION_CHECK_KEY='openjdk version \"21.0'
+  elif [[ $OTOOL_JDK_VERSION -eq 25 ]]; then
+    VERSION_CHECK_KEY='openjdk version \"25.0' 
   else
     echo "Environment variable 'OTOOL_JDK_VERSION' not accepted. Please Debug."
     VERSION_CHECK_KEY='-1'
@@ -1187,3 +1215,4 @@ function tryJreCompilation() {
   fi
   runOnBaseDirBashWithMount "java /testsDir/InProcessCompileDemo.java $OTOOL_JDK_VERSION" "$1"
 }
+
