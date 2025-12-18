@@ -464,12 +464,13 @@ function onlyOneJdk() {
   javas=$(cat $(getOldLsLog) | cleanBashOutputs | grep java |wc -l)
   jres=$(cat $(getOldLsLog) | cleanBashOutputs | grep jre  |wc -l)
   #branch for jre vs jdk
+  # in JDK25+ parallel instalability feature was removed, resulting in less links
   if [[ $OTOOL_JDK_VERSION -ge 25 ]]; then
     if [ "$OTOOL_jresdk" == "jre"  ] ; then
       echo "otool jresdk settings is: $OTOOL_jresdk"
       # it is interval due to rhel 7/8 diffs
       test $javas -ge 1 -a $javas -le 1
-      test $jres  -ge 5 -a $jres  -le 6
+      test $jres  -ge 4 -a $jres  -le 4
     else # JDK
       # it is interval due to rhel 7/8 diffs
       test $javas -ge 4 -a $javas -le 4
@@ -495,12 +496,13 @@ function allExeptOneAreLinks() {
   cat $(getOldLsLLog) | cleanBashOutputs| grep  jre | grep -e "->"
   javasLinks=$(cat $(getOldLsLLog) | cleanBashOutputs| grep java | grep -e "->" | wc -l)
   jresLinks=$(cat $(getOldLsLLog) | cleanBashOutputs| grep  jre | grep -e "->" | wc -l)
+  # in JDK25+ parallel instalability feature was removed, resulting in less links
   if [[ $OTOOL_JDK_VERSION -ge 25 ]]; then 
     if [ "$OTOOL_jresdk" == "jre"  ] ; then
       echo "otool jresdk settings is: $OTOOL_jresdk"
       # it is interval due to rhel 7/8 diffs
       test $javasLinks -ge 1 -a $javasLinks -le 1
-      test $jresLinks  -ge 5 -a $jresLinks  -le 6
+      test $jresLinks  -ge 4 -a $jresLinks  -le 4
     else # JDK
       # it is interval due to rhel 7/8 diffs
       test $javasLinks -ge 3 -a $javasLinks -le 3
