@@ -39,14 +39,27 @@ function processArguments() {
   if [[ -z $ARG_JDK ]] ; then
     echo "JDK image was not specified" >&2
     exit 1
+  fi
+  # Convert Quay.io container image references to v2 API URL format for validation
+  if [[ "$ARG_JDK" == *"quay.io"* ]] && [[ "$ARG_JDK" != *"/v2/"* ]]; then
+    # Parse: quay.io/repo/path/image@sha256:digest
+    # Convert to: https://quay.io/v2/repo/path/image/manifests/sha256:digest
+    QUAY_REPO=$(echo "$ARG_JDK" | sed 's|quay.io/||' | sed 's|@.*||')
+    QUAY_DIGEST=$(echo "$ARG_JDK" | grep -oP '@\K.*')
+    QUAY_REF="https://quay.io/v2/${QUAY_REPO}/manifests/${QUAY_DIGEST}"
+    echo "Converted Quay.io reference to v2 API URL: $QUAY_REF"
+  fi
   # I am not 100% sure this is the best approach. It may be enough that the command does not fail without needing the exact return value.
   # I am running this to ensure the string passed in as the image repo actually exisits.
-  elif [[ $(curl --silent -f -I -k $ARG_JDK |grep -E "^HTTP" | awk -F " " '{print $2}') == 302 ]]
+  HTTP_STATUS=$(curl --silent -f -I -k $QUAY_REF |grep -E "^HTTP" | awk -F " " '{print $2}')
+  
+  # Check for valid HTTP status codes, suggesting the JDK image exists.
+  if [[ "$HTTP_STATUS" == "302" ]] || [[ "$HTTP_STATUS" == "200" ]] || [[ "$HTTP_STATUS" == "401" ]]
   then
-    echo "OpenJDK Container Image found on Brew."
-    JDK_CONTAINER_IMAGE=$ARG_JDK 
+    echo "OpenJDK Container Image found."
+    JDK_CONTAINER_IMAGE=$ARG_JDK
   else
-    echo "OpenJDK Container Image not found on Brew. Check that images exists."
+    echo "OpenJDK Container Image not found on Brew. Check that image exists."
     echo "Failed Image: $ARG_JDK"
     if [ "$REMOTE_NORMAL_CONTAINER" = "true" ] ; then
       echo "using directly $ARG_JDK"
@@ -167,7 +180,7 @@ function setUser() {
     export USERNAME="$OVERWRITE_USER"
     return
   fi
-  if $PD_PROVIDER inspect $HASH --format "{{.Labels.name}}" | grep -e 'ubi9' -e 'rhel9' ; then
+  if $PD_PROVIDER inspect $HASH --format "{{.Labels.name}}" | grep -e 'ubi9' -e 'rhel9' -e 'ubi10' -e 'rhel10' ; then
       export USERNAME='default'
   else
       export USERNAME='jboss'
@@ -466,7 +479,7 @@ function onlyOneJdk() {
   #branch for jre vs jdk
   # in JDK25+ parallel instalability feature was removed, resulting in less links
   echo "otool jresdk settings is: $OTOOL_jresdk"
-  if [ "0$OTOOL_JDK_VERSION" -ge "25" ] ; then
+  if [ "0$OTOOL_JDK_VERSION" -ge "25" -o "$OTOOL_BUILD_OS_VERSION" -ge "10" ] ; then
     if [ "$OTOOL_jresdk" == "jre"  ] ; then
       test $javas -ge 1 -a $javas -le 1
       test $jres  -ge 4 -a $jres  -le 4
@@ -628,7 +641,7 @@ function s2iLocal() {
     else
         $s2iBin build -e "$MAIN" -e "$ARGS" "$REPO" "$HASH" "$NAME" --assemble-user $USERNAME --as-dockerfile $DF.orig
     fi
-    if [ "x$OVERWRITE_USER" == x ] ; then
+    if [ "x$OVERWRITE_USER" == x ] && [ "$OTOOL_BUILD_OS_VERSION" -le "9" ] ; then
       #update the container file for proper functionality
       cat $DF.orig | sed "s;/usr/libexec;/usr/local;g" | sed "s;1001:0;$USERNAME:$USERNAME;g" | sed "s;/s2i/run;/s2i/run $ADDS;g;" > $DF.nw1
     else
@@ -705,10 +718,13 @@ function s2iBinaryCopy() {
   local d=`mktemp -d`
   pushd $d
     DF=s2iDockerFile
-
-    $s2iBin build "$APP_SRC" "$BASEIMG" "$OUTIMG" --pull-policy never --context-dir=$CONTEXTDIR -r=${rev} \
+    if [ "$OTOOL_BUILD_OS_VERSION" -ge "10" ] ; then
+      $s2iBin build "$APP_SRC" "$BASEIMG" "$OUTIMG" --pull-policy never --context-dir=$CONTEXTDIR -r=${rev} \
+                  --loglevel 1 --as-dockerfile $DF --image-scripts-url image:///usr/libexec/s2i
+    else
+      $s2iBin build "$APP_SRC" "$BASEIMG" "$OUTIMG" --pull-policy never --context-dir=$CONTEXTDIR -r=${rev} \
                   --loglevel 1 --as-dockerfile $DF --image-scripts-url image:///usr/local/s2i
-
+    fi 
   buildFileWithHash $DF
   popd
   rm -rf $d
@@ -724,10 +740,13 @@ function s2iHsPerfDataBuild() {
   local d=`mktemp -d`
   pushd $d
     DF=s2iDockerFile
-
-    $s2iBin build --pull-policy never --as-dockerfile $DF --context-dir=$CONTEXTDIR -r=${rev} \
+    if [ "$OTOOL_BUILD_OS_VERSION" -ge "10" ] ; then
+      $s2iBin build "$APP_SRC" "$BASEIMG" "$OUTIMG" --pull-policy never --context-dir=$CONTEXTDIR -r=${rev} \
+                  --loglevel 1 --as-dockerfile $DF --image-scripts-url image:///usr/libexec/s2i
+    else
+      $s2iBin build --pull-policy never --as-dockerfile $DF --context-dir=$CONTEXTDIR -r=${rev} \
                    --assemble-user 185 --loglevel 1 --image-scripts-url image:///usr/local/s2i "$APP_SRC" "$BASEIMG" "$OUTIMG"
-
+    fi
     $PD_PROVIDER build -t $OUTIMG -f $DF
   popd
   rm -rf $d
