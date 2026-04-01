@@ -54,7 +54,7 @@ function processArguments() {
   HTTP_STATUS=$(curl --silent -f -I -k $QUAY_REF |grep -E "^HTTP" | awk -F " " '{print $2}')
   
   # Check for valid HTTP status codes, suggesting the JDK image exists.
-  if [[ "$HTTP_STATUS" == "302" ]] || [[ "$HTTP_STATUS" == "200" ]] || [[ "$HTTP_STATUS" == "401" ]]
+  if [[ "$HTTP_STATUS" == "302" ]] || [[ "$HTTP_STATUS" == "200" ]]
   then
     echo "OpenJDK Container Image found."
     JDK_CONTAINER_IMAGE=$ARG_JDK
