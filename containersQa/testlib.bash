@@ -35,23 +35,30 @@ function parseArguments() {
   done
 }
 
+# Convert Quay.io container image references to v2 API URL format for validation
+function convertQuayRefToV2Url() {
+  ORIGINAL_URL="$1"
+  if [[ "$ORIGINAL_URL" == *"quay.io"* ]] && [[ "$ORIGINAL_URL" != *"/v2/"* ]]; then
+    # Parse: quay.io/repo/path/image@sha256:digest
+    # Convert to: https://quay.io/v2/repo/path/image/manifests/sha256:digest
+    QUAY_REPO=$(echo "$ORIGINAL_URL" | sed 's|quay.io/||' | sed 's|@.*||')
+    QUAY_DIGEST=$(echo "$ORIGINAL_URL" | grep -oP '@\K.*')
+    echo "https://quay.io/v2/${QUAY_REPO}/manifests/${QUAY_DIGEST}"
+  else
+    echo "$ORIGINAL_URL"
+  fi
+}
+
+
 function processArguments() {
   if [[ -z $ARG_JDK ]] ; then
     echo "JDK image was not specified" >&2
     exit 1
   fi
-  # Convert Quay.io container image references to v2 API URL format for validation
-  if [[ "$ARG_JDK" == *"quay.io"* ]] && [[ "$ARG_JDK" != *"/v2/"* ]]; then
-    # Parse: quay.io/repo/path/image@sha256:digest
-    # Convert to: https://quay.io/v2/repo/path/image/manifests/sha256:digest
-    QUAY_REPO=$(echo "$ARG_JDK" | sed 's|quay.io/||' | sed 's|@.*||')
-    QUAY_DIGEST=$(echo "$ARG_JDK" | grep -oP '@\K.*')
-    QUAY_REF="https://quay.io/v2/${QUAY_REPO}/manifests/${QUAY_DIGEST}"
-    echo "Converted Quay.io reference to v2 API URL: $QUAY_REF"
-  fi
+  PROCESSED_URL=$(convertQuayRefToV2Url "$ARG_JDK")
   # I am not 100% sure this is the best approach. It may be enough that the command does not fail without needing the exact return value.
   # I am running this to ensure the string passed in as the image repo actually exisits.
-  HTTP_STATUS=$(curl --silent -f -I -k $QUAY_REF |grep -E "^HTTP" | awk -F " " '{print $2}')
+  HTTP_STATUS=$(curl --silent -f -I -k $PROCESSED_URL |grep -E "^HTTP" | awk -F " " '{print $2}')
   
   # Check for valid HTTP status codes, suggesting the JDK image exists.
   if [[ "$HTTP_STATUS" == "302" ]] || [[ "$HTTP_STATUS" == "200" ]]
