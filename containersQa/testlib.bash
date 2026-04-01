@@ -479,7 +479,7 @@ function onlyOneJdk() {
   #branch for jre vs jdk
   # in JDK25+ parallel instalability feature was removed, resulting in less links
   echo "otool jresdk settings is: $OTOOL_jresdk"
-  if [ "0$OTOOL_JDK_VERSION" -ge "25" -o "$OTOOL_BUILD_OS_VERSION" -ge "10" ] ; then
+  if [ "0$OTOOL_JDK_VERSION" -ge "25" -o "0$OTOOL_BUILD_OS_VERSION" -ge "10" ] ; then
     if [ "$OTOOL_jresdk" == "jre"  ] ; then
       test $javas -ge 1 -a $javas -le 1
       test $jres  -ge 4 -a $jres  -le 4
@@ -641,7 +641,7 @@ function s2iLocal() {
     else
         $s2iBin build -e "$MAIN" -e "$ARGS" "$REPO" "$HASH" "$NAME" --assemble-user $USERNAME --as-dockerfile $DF.orig
     fi
-    if [ "x$OVERWRITE_USER" == x ] && [ "$OTOOL_BUILD_OS_VERSION" -le "9" ] ; then
+    if [ "x$OVERWRITE_USER" == x ] && [ "0$OTOOL_BUILD_OS_VERSION" -le "9" ] ; then
       #update the container file for proper functionality
       cat $DF.orig | sed "s;/usr/libexec;/usr/local;g" | sed "s;1001:0;$USERNAME:$USERNAME;g" | sed "s;/s2i/run;/s2i/run $ADDS;g;" > $DF.nw1
     else
@@ -706,7 +706,7 @@ function s2iBasic() {
 
 # get the correct path to the s2i binary
 function getImageScriptsUrl() {
-  if [ "$OTOOL_BUILD_OS_VERSION" -ge "10" ] ; then
+  if [ "0$OTOOL_BUILD_OS_VERSION" -ge "10" ] ; then
     echo "image:///usr/libexec/s2i"
   else
     echo "image:///usr/local/s2i"
