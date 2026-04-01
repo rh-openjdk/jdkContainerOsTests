@@ -704,6 +704,15 @@ function s2iBasic() {
   s2iLocal
 }
 
+# get the correct path to the s2i binary
+function getImageScriptsUrl() {
+  if [ "$OTOOL_BUILD_OS_VERSION" -ge "10" ] ; then
+    echo "image:///usr/libexec/s2i"
+  else
+    echo "image:///usr/local/s2i"
+  fi
+}
+
 function s2iBinaryCopy() {
   prepareS2I
   setUser
@@ -718,13 +727,8 @@ function s2iBinaryCopy() {
   local d=`mktemp -d`
   pushd $d
     DF=s2iDockerFile
-    if [ "$OTOOL_BUILD_OS_VERSION" -ge "10" ] ; then
-      $s2iBin build "$APP_SRC" "$BASEIMG" "$OUTIMG" --pull-policy never --context-dir=$CONTEXTDIR -r=${rev} \
-                  --loglevel 1 --as-dockerfile $DF --image-scripts-url image:///usr/libexec/s2i
-    else
-      $s2iBin build "$APP_SRC" "$BASEIMG" "$OUTIMG" --pull-policy never --context-dir=$CONTEXTDIR -r=${rev} \
-                  --loglevel 1 --as-dockerfile $DF --image-scripts-url image:///usr/local/s2i
-    fi 
+    $s2iBin build "$APP_SRC" "$BASEIMG" "$OUTIMG" --pull-policy never --context-dir=$CONTEXTDIR -r=${rev} \
+                   --loglevel 1 --as-dockerfile $DF --image-scripts-url $(getImageScriptsUrl)
   buildFileWithHash $DF
   popd
   rm -rf $d
@@ -740,13 +744,8 @@ function s2iHsPerfDataBuild() {
   local d=`mktemp -d`
   pushd $d
     DF=s2iDockerFile
-    if [ "$OTOOL_BUILD_OS_VERSION" -ge "10" ] ; then
-      $s2iBin build "$APP_SRC" "$BASEIMG" "$OUTIMG" --pull-policy never --context-dir=$CONTEXTDIR -r=${rev} \
-                  --loglevel 1 --as-dockerfile $DF --image-scripts-url image:///usr/libexec/s2i
-    else
-      $s2iBin build --pull-policy never --as-dockerfile $DF --context-dir=$CONTEXTDIR -r=${rev} \
-                   --assemble-user 185 --loglevel 1 --image-scripts-url image:///usr/local/s2i "$APP_SRC" "$BASEIMG" "$OUTIMG"
-    fi
+    $s2iBin build --pull-policy never --as-dockerfile $DF --context-dir=$CONTEXTDIR -r=${rev} \
+                   --assemble-user 185 --loglevel 1 --image-scripts-url $(getImageScriptsUrl) "$APP_SRC" "$BASEIMG" "$OUTIMG"
     $PD_PROVIDER build -t $OUTIMG -f $DF
   popd
   rm -rf $d
