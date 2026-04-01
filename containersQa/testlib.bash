@@ -728,7 +728,7 @@ function s2iBinaryCopy() {
   pushd $d
     DF=s2iDockerFile
     $s2iBin build "$APP_SRC" "$BASEIMG" "$OUTIMG" --pull-policy never --context-dir=$CONTEXTDIR -r=${rev} \
-                   --loglevel 1 --as-dockerfile $DF --image-scripts-url $(getImageScriptsUrl)
+                  --loglevel 1 --as-dockerfile $DF --image-scripts-url $(getImageScriptsUrl)
   buildFileWithHash $DF
   popd
   rm -rf $d
