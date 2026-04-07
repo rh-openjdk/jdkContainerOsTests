@@ -692,14 +692,12 @@ function s2iBasic() {
        echo "Print the pom.xml file."
        cat pom.xml
     popd
-    git config --global user.name "conatinerQa bot"
-    git config --global user.email "ContBont@qa.com"
     git init --bare rhimgrepo
     git clone file://$d/rhimgrepo rhimgclone
     cp -vr rhimg/* rhimgclone
     pushd rhimgclone
       git add *
-      git commit -m "initial commit"
+      git commit -m "initial commit" --author "containerQA bot <ContBont@qa.example.com>"
       git push origin master
     popd
   popd
