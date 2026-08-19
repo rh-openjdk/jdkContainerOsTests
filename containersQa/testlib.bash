@@ -903,14 +903,14 @@ function checkHardcodedMaven() {
 }
 
 function checkHardcodedJdks() {
+  JRE_8_VERSION='1.8.0_504-b01'
+  JRE_11_VERSION='11.0.32.1+1-LTS'
+  JRE_17_VERSION='17.0.20.1+1-LTS'
+  JRE_21_VERSION='21.0.12.1+1-LTS'
+  JRE_25_VERSION='25.0.4.1'
   if [ "$OTOOL_jresdk" == "jre"  ] ; then
     echo "otool jresdk settings is: $OTOOL_jresdk"
     echo "Check version based off java -version call."
-    JRE_8_VERSION='1.8.0_504-b01'
-    JRE_11_VERSION='11.0.32.1+1-LTS'
-    JRE_17_VERSION='17.0.20.1+1-LTS'
-    JRE_21_VERSION='21.0.12.1+1-LTS'
-    JRE_25_VERSION='25.0.4.1'
     cat $(getOldJavaVersionLog)
     cat $(getOldJavaVersionLog) | grep "openjdk version"
     cat $(getOldJavaVersionLog) | grep -e "$JRE_11_VERSION" -e "$JRE_8_VERSION" -e "$JRE_17_VERSION" -e "$JRE_21_VERSION" -e "$JRE_25_VERSION"
@@ -918,7 +918,12 @@ function checkHardcodedJdks() {
   else
     cat $(getOldMvnVersionLog)
     cat $(getOldMvnVersionLog) | grep "Java version:"
-    cat $(getOldMvnVersionLog) | grep -e "Java version: 11.0.32.1" -e "Java version: 1.8.0_504" -e "Java version: 17.0.20.1" -e "Java version: 21.0.12.1" -e "Java version: 25.0.4.1"
+    cat $(getOldMvnVersionLog) | \
+      grep -e "Java version: ${JRE_8_VERSION%%-*}"  \
+           -e "Java version: ${JRE_11_VERSION%%+*}" \
+           -e "Java version: ${JRE_17_VERSION%%+*}" \
+           -e "Java version: ${JRE_21_VERSION%%+*}" \
+           -e "Java version: ${JRE_25_VERSION%%+*}"
   fi    
 
 }
