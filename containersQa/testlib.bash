@@ -426,7 +426,7 @@ function mavenJavaVersion() {
 
 function mavenCreateAndRun() {
   skipIfJreExecution
-  local createMavenSettings="mkdir -p ~/.m2 && printf '%s\n' '<!--' '  Settings file using Google Maven Central mirror to avoid too many errors from maven.' '-->' '' '<settings>' '  <mirrors>' '    <mirror>' '      <id>google-maven-central</id>' '      <name>Google Maven Central mirror</name>' '      <url>https://maven-central.storage-download.googleapis.com/maven2</url>' '      <mirrorOf>central</mirrorOf>' '    </mirror>' '  </mirrors>' '</settings>' > ~/.m2/settings.xml"
+  local createMavenSettings="mkdir -p ~/.m2 && chmod 777 ~/.m2 && printf '%s\n' '<!--' '  Settings file using Google Maven Central mirror to avoid too many errors from maven.' '-->' '' '<settings>' '  <mirrors>' '    <mirror>' '      <id>google-maven-central</id>' '      <name>Google Maven Central mirror</name>' '      <url>https://maven-central.storage-download.googleapis.com/maven2</url>' '      <mirrorOf>central</mirrorOf>' '    </mirror>' '  </mirrors>' '</settings>' > ~/.m2/settings.xml && chmod 666 ~/.m2/settings.xml "
   if [ `shouldBeCollection` == yes ] ; then
     # collections dont like multiline
     runOnBaseDirBash "$createMavenSettings && `sclEnable` mvn -B archetype:generate -DgroupId=org.test.rhimg  -DartifactId=rhimg -DarchetypeArtifactId=maven-archetype-quickstart -DarchetypeVersion=1.4 -DinteractiveMode=false && cd rhimg && `sclEnable` mvn -B clean install && `sclEnable` java -cp  target/rhimg-1.0-SNAPSHOT.jar org.test.rhimg.App"
