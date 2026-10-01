@@ -115,7 +115,7 @@ function pretest() {
   fi
   prepareUserSession
   if [ `uname -m` == "s390x" ] ; then
-    DISABLE_LABEL="--security-opt label=disable"
+    DISABLE_LABEL="--security-opt label=disable --userns=keep-id"
   else
     DISABLE_LABEL=""
   fi
