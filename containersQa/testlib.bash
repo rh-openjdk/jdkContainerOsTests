@@ -426,7 +426,6 @@ function mavenJavaVersion() {
 
 function mavenCreateAndRun() {
   skipIfJreExecution
-  sudo setenforce 0
   local createMavenSettings="mkdir -p ~/.m2 && chmod 777 ~/.m2 && touch ~/.m2/settings.xml && printf '%s\n' '<!--' '  Settings file using Google Maven Central mirror to avoid too many errors from maven.' '-->' '' '<settings>' '  <mirrors>' '    <mirror>' '      <id>google-maven-central</id>' '      <name>Google Maven Central mirror</name>' '      <url>https://maven-central.storage-download.googleapis.com/maven2</url>' '      <mirrorOf>central</mirrorOf>' '    </mirror>' '  </mirrors>' '</settings>' > ~/.m2/settings.xml && chmod 666 ~/.m2/settings.xml "
   if [ `shouldBeCollection` == yes ] ; then
     # collections dont like multiline
