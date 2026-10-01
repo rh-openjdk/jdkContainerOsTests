@@ -114,6 +114,11 @@ function pretest() {
     export PD_PROVIDER=$OTOOL_CONTAINER_RUNTIME
   fi
   prepareUserSession
+  if [ `uname -m` == "s390x" ] ; then
+    DISABLE_LABEL="--security-opt label=disable"
+  else
+    DISABLE_LABEL=""
+  fi
 }
 
 function setup() {
@@ -240,15 +245,15 @@ function buildFileWithHash() {
 }
 
 function runOnBaseDir() {
-  $PD_PROVIDER run -i $HASH "$@"
+  $PD_PROVIDER run -i $DISABLE_LABEL $HASH "$@"
 }
 
 function runOnBaseDirOtherUser() {
-  $PD_PROVIDER run -i -u 12324 $HASH "$@"
+  $PD_PROVIDER run -i $DISABLE_LABEL -u 12324 $HASH "$@"
 }
 
 function runOnBaseDirBash() {
-  $PD_PROVIDER run -i $HASH bash -c "$1"
+  $PD_PROVIDER run -i $DISABLE_LABEL $HASH bash -c "$1"
 }
 
 function runOnBaseDirBashWithMount() {
@@ -257,17 +262,17 @@ function runOnBaseDirBashWithMount() {
   chmod 777 "${d}"
   ls -ld ${d}
   local r=0
-  ${2} $PD_PROVIDER run -v="${d}:/testsDir:Z" -i "$HASH" bash -c "${1}" || r=$?
+  ${2} $PD_PROVIDER run $DISABLE_LABEL -v="${d}:/testsDir:Z" -i "$HASH" bash -c "${1}" || r=$?
   rm -rf "${d}"
   return $r
 }
 
 function runOnBaseDirBashOtherUser() {
-  $PD_PROVIDER run -i -u 12324 $HASH bash -c "$1"
+  $PD_PROVIDER run $DISABLE_LABEL -i -u 12324 $HASH bash -c "$1"
 }
 
 function runOnBaseDirBashRootUser() {
-  $PD_PROVIDER run -i -u root $HASH bash -c "$1"
+  $PD_PROVIDER run $DISABLE_LABEL -i -u root $HASH bash -c "$1"
 }
 
 function lsLUsrLibJvm() {
@@ -760,7 +765,7 @@ function s2iHsPerfDataBuild() {
   popd
   rm -rf $d
   set +e
-  $PD_PROVIDER run -i $OUTIMG stat /tmp/hsperfdata_$USERNAME #| grep -e "stat: cannot statx '/tmp/hsperfdata_$USERNAME': No such file or directory"
+  $PD_PROVIDER run -i $DISABLE_LABEL $OUTIMG stat /tmp/hsperfdata_$USERNAME #| grep -e "stat: cannot statx '/tmp/hsperfdata_$USERNAME': No such file or directory"
   set -e
 }
 
@@ -871,7 +876,7 @@ function runHashByPodman() {
     echo $SKIPPED
     return
   else
-    $PD_PROVIDER run $1
+    $PD_PROVIDER run $DISABLE_LABEL $1
   fi
 }
 
